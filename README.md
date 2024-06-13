@@ -4,7 +4,7 @@ A very basic shell.
 
 ## Features
 
-- **Shell script support:** This shell has some basic shell script support.
+- **Shell script support:** This shell has some basic script support.
 
 - **Environment variables:** There is support for environment variables.
 
