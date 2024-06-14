@@ -1,17 +1,15 @@
+use crate::config;
 use nix::{
     sys::signal::{kill, Signal},
     unistd::Pid,
 };
 use rustyline::{error::ReadlineError, history::DefaultHistory, Editor};
-
 use std::{
     env,
     io::{self, ErrorKind},
     path::PathBuf,
     process::{self, Command, Stdio},
 };
-
-use crate::config;
 
 pub struct Shell {
     active_directory: PathBuf,
