@@ -100,17 +100,17 @@ impl Shell {
 
         args = args.into_iter().map(|arg| self.process_env_vars(&arg)).collect();
 
-        let is_background = args.last().map(|x| x == "&").unwrap_or(false);
+        let is_background = args.last().is_some_and(|x| x == "&");
         if is_background {
             args.pop();
         }
 
         match command_name {
             "cd" => {
-                if !args.is_empty() {
-                    self.change_directory(PathBuf::from(args[0].clone()));
-                } else {
+                if args.is_empty() {
                     self.change_directory(PathBuf::from(env::var("HOME").expect("Failed to get home directory")));
+                } else {
+                    self.change_directory(PathBuf::from(args[0].clone()));
                 }
             }
             "exit" => process::exit(0),
@@ -136,21 +136,21 @@ impl Shell {
                     let err = child.unwrap_err();
                     match err.kind() {
                         ErrorKind::NotFound => {
-                            eprintln!("Command not found: {}", command_name);
+                            eprintln!("Command not found: {command_name}");
                         }
-                        _ => eprintln!("{:#?}", err),
+                        _ => eprintln!("{err:#?}"),
                     }
                     return Ok(());
                 }
 
                 let mut child = child.unwrap();
 
-                if !is_background {
-                    self.current_task = Some(Pid::from_raw(child.id() as i32));
+                if is_background {
+                    println!("Background task started with PID: {}", child.id());
+                } else {
+                    self.current_task = Some(Pid::from_raw(child.id().try_into().unwrap()));
                     child.wait()?;
                     self.current_task = None;
-                } else {
-                    println!("Background task started with PID: {}", child.id());
                 }
             }
         }
@@ -158,6 +158,7 @@ impl Shell {
         Ok(())
     }
 
+    #[allow(clippy::unused_self)]
     fn process_env_vars(&self, arg: &str) -> String {
         if arg.starts_with('$') {
             if let Ok(var) = env::var(arg.trim_start_matches('$')) {

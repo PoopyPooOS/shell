@@ -1,5 +1,5 @@
 use rustyline::error::ReadlineError;
-use rustyline::{config::*, Editor};
+use rustyline::{config::Config, Editor};
 use shell::Shell;
 use std::env;
 use std::path::PathBuf;
@@ -35,10 +35,9 @@ fn main() -> Result<(), ReadlineError> {
 
     loop {
         match shell.prompt() {
-            Ok(_) => (),
             Err(ReadlineError::Eof) => break,
             Err(ReadlineError::Interrupted) => shell.ctrlc(),
-            Err(_) => (),
+            Err(_) | Ok(()) => (),
         }
     }
 
