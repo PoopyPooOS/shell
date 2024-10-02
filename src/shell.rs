@@ -138,7 +138,7 @@ impl Shell {
                         ErrorKind::NotFound => {
                             eprintln!("Command not found: {command_name}");
                         }
-                        _ => eprintln!("{err:#?}"),
+                        _ => eprintln!("{:#?}", err),
                     }
                     return Ok(());
                 }
