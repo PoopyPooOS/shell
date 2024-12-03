@@ -33,8 +33,17 @@ impl Shell {
 
     pub fn prompt(&mut self) -> Result<(), ReadlineError> {
         let pwd = self.active_directory.canonicalize().unwrap();
+        let home = env::var("HOME").unwrap_or_default();
 
-        let input = self.rl.readline(&format!("{} {} ", pwd.display(), self.prompt))?;
+        let input = self.rl.readline(&format!(
+            "{} {} ",
+            if pwd == PathBuf::from(home) {
+                "~".to_string()
+            } else {
+                pwd.display().to_string()
+            },
+            self.prompt
+        ))?;
 
         self.rl.add_history_entry(&input)?;
         self.execute_command(&input)?;
@@ -107,7 +116,7 @@ impl Shell {
 
         match command_name {
             "cd" => {
-                if args.is_empty() {
+                if args.is_empty() || args[0] == "~" {
                     self.change_directory(PathBuf::from(env::var("HOME").expect("Failed to get home directory")));
                 } else {
                     self.change_directory(PathBuf::from(args[0].clone()));
@@ -138,11 +147,15 @@ impl Shell {
                         ErrorKind::NotFound => {
                             eprintln!("Command not found: {command_name}");
                         }
-                        _ => eprintln!("{:#?}", err),
+                        _ => eprintln!("{err:#?}"),
                     }
                     return Ok(());
                 }
 
+                #[allow(
+                    clippy::zombie_processes,
+                    reason = "child.wait() is only called for blocking commands, not background ones."
+                )]
                 let mut child = child.unwrap();
 
                 if is_background {
